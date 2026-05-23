@@ -1,0 +1,36 @@
+
+nano ~/clinica-nuevo-amanecer/frontend/src/pages/Triaje.tsx
+import { useState, useEffect } from 'react';
+import api from '../api/axios';
+
+interface Paciente {
+  id: number;
+  nombre: string;
+  apellido: string;
+  cedula: string;
+}
+
+function Triaje() {
+  const [pacientes, setPacientes] = useState<Paciente[]>([]);
+  const [form, setForm] = useState({
+    pacienteId: '',
+    presionArterial: '',
+    temperatura: '',
+    peso: '',
+    talla: '',
+    frecuenciaCardiaca: '',
+  });
+  const [imc, setImc] = useState<number | null>(null);
+  const [exito, setExito] = useState(false);
+
+  useEffect(() => {
+    api.get('/pacientes').then((res) => setPacientes(res.data));
+  }, []);
+
+  const calcularImc = (peso: string, talla: string) => {
+    if (peso && talla) {
+      const p = Number(peso);
+      const t = Number(talla) / 100;
+      setImc(Number((p / (t * t)).toFixed(2)));
+    } else {
+

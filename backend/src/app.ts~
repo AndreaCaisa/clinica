@@ -1,0 +1,25 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import authRoutes from './routes/authRoutes';
+import pacienteRoutes from './routes/pacienteRoutes';
+import medicoRoutes from './routes/medicoRoutes';
+import citaRoutes from './routes/citaRoutes';
+import triajeRoutes from './routes/triajeRoutes';
+dotenv.config();
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.use(cors());
+app.use(express.json());
+app.use('/api/auth', authRoutes);
+app.use('/api/pacientes', pacienteRoutes);
+app.use('/api/medicos', medicoRoutes);
+app.use('/api/citas', citaRoutes);
+app.use('/api/triaje', triajeRoutes);
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK' });
+});
+app.listen(PORT, () => {
+  process.stdout.write('Servidor en puerto ' + PORT + '\n');
+});
+export default app;

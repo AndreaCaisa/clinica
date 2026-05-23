@@ -1,0 +1,156 @@
+import { useState, useEffect } from 'react';
+import api from '../api/axios';
+
+interface Paciente {
+  id: number;
+  nombre: string;
+  apellido: string;
+  cedula: string;
+}
+
+interface DetalleFactura {
+  descripcion: string;
+  cantidad: number;
+  precioUnitario: number;
+}
+
+interface Factura {
+  id: number;
+  fecha: string;
+  total: number;
+  pagada: boolean;
+  paciente: Paciente;
+  detalles: { descripcion: string; cantidad: number; precioUnitario: number; subtotal: number }[];
+}
+
+function Facturacion() {
+  const [facturas, setFacturas] = useState<Factura[]>([]);
+  const [pacientes, setPacientes] = useState<Paciente[]>([]);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [pacienteId, setPacienteId] = useState('');
+  const [detalles, setDetalles] = useState<DetalleFactura[]>([
+    { descripcion: '', cantidad: 1, precioUnitario: 0 },
+  ]);
+
+  const cargarDatos = async () => {
+    const [fRes, pRes] = await Promise.all([
+      api.get('/facturas'),
+      api.get('/pacientes'),
+    ]);
+    setFacturas(fRes.data);
+    setPacientes(pRes.data);
+  };
+
+  useEffect(() => { cargarDatos(); }, []);
+
+  const handleDetalleChange = (index: number, key: string, value: string) => {
+    const nuevos = [...detalles];
+    nuevos[index] = { ...nuevos[index], [key]: key === 'descripcion' ? value : Number(value) };
+    setDetalles(nuevos);
+  };
+
+  const handleCrear = async () => {
+    try {
+      await api.post('/facturas', { pacienteId, detalles });
+      setMostrarFormulario(false);
+      setPacienteId('');
+      setDetalles([{ descripcion: '', cantidad: 1, precioUnitario: 0 }]);
+      cargarDatos();
+    } catch {
+      alert('Error al crear factura');
+    }
+  };
+
+  const handlePagar = async (id: number) => {
+    try {
+      await api.put('/facturas/' + id + '/pagar', {});
+      cargarDatos();
+    } catch {
+      alert('Error al registrar pago');
+    }
+  };
+
+  const total = detalles.reduce((acc, d) => acc + d.cantidad * d.precioUnitario, 0);
+
+  return (
+    <div className="max-w-5xl mx-auto p-6">
+      <h2 className="text-xl font-bold text-gray-800 mb-6">Facturacion</h2>
+      <div className="flex justify-between items-center mb-6">
+        <p className="text-sm text-gray-500">{facturas.length} facturas emitidas</p>
+        <button type="button" onClick={() => setMostrarFormulario(true)} className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          + Nueva factura
+        </button>
+      </div>
+      {mostrarFormulario && (
+        <div className="bg-white rounded-xl shadow p-6 mb-6">
+          <h3 className="font-bold text-gray-700 mb-4">Nueva factura</h3>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-600 mb-1">Paciente</label>
+            <select value={pacienteId} onChange={(e) => setPacienteId(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm">
+              <option value="">Seleccionar...</option>
+              {pacientes.map((p) => (
+                <option key={p.id} value={p.id}>{p.nombre} {p.apellido} - {p.cedula}</option>
+              ))}
+            </select>
+          </div>
+          <h4 className="font-medium text-gray-700 mb-2">Detalles</h4>
+          {detalles.map((d, i) => (
+            <div key={i} className="grid grid-cols-3 gap-3 mb-2">
+              <input type="text" placeholder="Descripcion" value={d.descripcion} onChange={(e) => handleDetalleChange(i, 'descripcion', e.target.value)} className="border rounded-lg px-3 py-2 text-sm" />
+              <input type="number" placeholder="Cantidad" value={d.cantidad} onChange={(e) => handleDetalleChange(i, 'cantidad', e.target.value)} className="border rounded-lg px-3 py-2 text-sm" />
+              <input type="number" placeholder="Precio unitario" value={d.precioUnitario} onChange={(e) => handleDetalleChange(i, 'precioUnitario', e.target.value)} className="border rounded-lg px-3 py-2 text-sm" />
+            </div>
+          ))}
+          <div className="flex justify-between items-center mt-4">
+            <button type="button" onClick={() => setDetalles([...detalles, { descripcion: '', cantidad: 1, precioUnitario: 0 }])} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm">
+              + Agregar detalle
+            </button>
+            <p className="font-bold text-gray-800">Total: ${total.toFixed(2)}</p>
+          </div>
+          <div className="flex gap-2 mt-4">
+            <button type="button" onClick={handleCrear} className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium">Emitir factura</button>
+            <button type="button" onClick={() => setMostrarFormulario(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm">Cancelar</button>
+          </div>
+        </div>
+      )}
+      <div className="bg-white rounded-xl shadow overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-blue-50 text-blue-800">
+            <tr>
+              {['N°', 'Paciente', 'Fecha', 'Total', 'Estado', 'Accion'].map((col) => (
+                <th key={col} className="px-4 py-3 text-left font-semibold">{col}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {facturas.length === 0 ? (
+              <tr><td colSpan={6} className="text-center py-8 text-gray-400">No hay facturas emitidas</td></tr>
+            ) : facturas.map((f) => (
+              <tr key={f.id} className="border-t hover:bg-gray-50">
+                <td className="px-4 py-3">#{f.id}</td>
+                <td className="px-4 py-3">{f.paciente.nombre} {f.paciente.apellido}</td>
+                <td className="px-4 py-3">{new Date(f.fecha).toLocaleDateString()}</td>
+                <td className="px-4 py-3 font-bold">${f.total.toFixed(2)}</td>
+                <td className="px-4 py-3">
+                  <span className={px-2 py-1 rounded-full text-xs font-medium ${f.pagada ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}}>
+                    {f.pagada ? 'Pagada' : 'Pendiente'}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  {!f.pagada && (
+                    <button type="button" onClick={() => handlePagar(f.id)} className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs">
+                      Registrar pago
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+export default Facturacion;
+

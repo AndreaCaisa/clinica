@@ -1,0 +1,57 @@
+import { Response } from 'express';
+import bcrypt from 'bcryptjs';
+import { PrismaClient } from '@prisma/client';
+import { RequestConUsuario } from '../middleware/authMiddleware';
+
+const prisma = new PrismaClient();
+
+export const listarUsuarios = async (
+  req: RequestConUsuario,
+  res: Response,
+): Promise<void> => {
+  const usuarios = await prisma.usuarioSistema.findMany({
+    select: { id: true, username: true, rol: true, activo: true, createdAt: true },
+    orderBy: { createdAt: 'desc' },
+  });
+  res.json(usuarios);
+};
+
+export const crearUsuario = async (
+  req: RequestConUsuario,
+  res: Response,
+): Promise<void> => {
+  const { username, password, rol } = req.body;
+  if (!username || !password || !rol) {
+    res.status(400).json({ mensaje: 'Todos los campos son obligatorios' });
+    return;
+  }
+  const existe = await prisma.usuarioSistema.findUnique({ where: { username } });
+  if (existe) {
+    res.status(409).json({ mensaje: 'El usuario ya existe' });
+    return;
+  }
+  const passwordHash = await bcrypt.hash(password, 10);
+  const usuario = await prisma.usuarioSistema.create({
+    data: { username, password: passwordHash, rol },
+    select: { id: true, username: true, rol: true, activo: true },
+  });
+  res.status(201).json(usuario);
+};
+
+export const toggleUsuario = async (
+  req: RequestConUsuario,
+  res: Response,
+): Promise<void> => {
+  const { id } = req.params;
+  const usuario = await prisma.usuarioSistema.findUnique({ where: { id: Number(id) } });
+  if (!usuario) {
+    res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    return;
+  }
+  const actualizado = await prisma.usuarioSistema.update({
+    where: { id: Number(id) },
+    data: { activo: !usuario.activo },
+    select: { id: true, username: true, rol: true, activo: true },
+  });
+  res.json(actualizado);
+};
