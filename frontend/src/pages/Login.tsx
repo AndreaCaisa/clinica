@@ -23,7 +23,7 @@ function Login() {
       localStorage.setItem('usuario', JSON.stringify(data.usuario));
       const rol = data.usuario.rol;
       if (rol === 'administrador') navigate('/dashboard');
-      else if (rol === 'medico') navigate('/citas');
+      else if (rol === 'medico') navigate('/medico');
       else if (rol === 'enfermera') navigate('/triaje');
       else if (rol === 'farmaceutico') navigate('/farmacia');
       else if (rol === 'recepcion') navigate('/pacientes');

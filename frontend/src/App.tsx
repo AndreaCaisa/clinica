@@ -10,6 +10,8 @@ import Hospitalizacion from './pages/Hospitalizacion';
 import Facturacion from './pages/Facturacion';
 import Dashboard from './pages/Dashboard';
 import Usuarios from './pages/Usuarios';
+import Medicos from './pages/Medicos';
+import MedicoPanel from './pages/MedicoPanel';
 
 function App() {
   return (
@@ -27,6 +29,8 @@ function App() {
         <Route path="/facturacion" element={<Facturacion />} />
         <Route path="/usuarios" element={<Usuarios />} />
         <Route path="*" element={<Navigate to="/" />} />
+        <Route path="/medicos" element={<Medicos />} />
+        <Route path="/medico" element={<MedicoPanel />} />
       </Routes>
     </BrowserRouter>
   );

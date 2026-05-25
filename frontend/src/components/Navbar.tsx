@@ -17,6 +17,7 @@ const NAV_LINKS: NavLink[] = [
   { href: '/farmacia', label: 'Farmacia', roles: ['administrador', 'farmaceutico'] },
   { href: '/hospitalizacion', label: 'Hospitalizacion', roles: ['administrador', 'enfermera'] },
   { href: '/facturacion', label: 'Facturacion', roles: ['administrador', 'recepcion'] },
+  { href: '/medicos', label: 'Medicos', roles: ['administrador'] },
 ];
 
 function Navbar() {

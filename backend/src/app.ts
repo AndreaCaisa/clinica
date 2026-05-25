@@ -13,6 +13,7 @@ import facturaRoutes from './routes/facturaRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import usuarioRoutes from './routes/usuarioRoutes';
 import despachoRoutes from './routes/despachoRoutes';
+import medicoInterfazRoutes from './routes/medicoInterfazRoutes';
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use('/api/facturas', facturaRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/despacho', despachoRoutes);
+app.use('/api/medico-interfaz', medicoInterfazRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK' });
